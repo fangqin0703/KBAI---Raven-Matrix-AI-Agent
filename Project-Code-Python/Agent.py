@@ -40,23 +40,6 @@ class Agent:
         if problem.problemType == "3x3":
             return self.threeByThreeAnalysis(problem)
 
-        # elif problem.problemType == "3x3":
-        #     a = Image.open(problem.figures['A'].visualFilename)
-        #     b = Image.open(problem.figures['B'].visualFilename)
-        #
-        #     # a = convert_to_blk_white(np.array(a))
-        #     # b = convert_to_blk_white(np.array(b))
-        #     a = np.array(a)
-        #     b = np.array(b)
-        #
-        #     error_rms = (np.sum((a.astype("float") - b.astype("float")) ** 2)) ** (1 / 2)
-        #     error_rms = error_rms / a.size
-        #
-        #     error_euc = (((a - b) ** 2).sum(axis=2) ** 0.5).sum()
-        #     error_euc = error_euc / a.size
-        #
-        #     print("a")
-
         return -1
 
     def twoByTwoAnalysis(self, problem):
@@ -117,24 +100,19 @@ class Agent:
             print(problem.name + ": " + str(answer) + " using consistent_change_in_row")
             return answer
 
+        answer = threeByThreeProblem.check_corner_reflections(problem)
+        if answer > 0:
+            print(problem.name + ": " + str(answer) + " using check_Corner_Reflections")
+            return answer
 
-
-
-
+        answer = threeByThreeProblem.reverse_image_halves_comparison(problem)
+        if answer > 0:
+            print(problem.name + ": " + str(answer) + " using reverse_image_halves_comparison")
+            return answer
 
         # Default a guess to 1
         print(problem.name + ": 1 using default")
         return 1
-
-
-
-
-
-    # TODO: Check if all images in a row are the same, if so, find the similar image for the last row
-
-
-
-
 
 
 class TwoByTwoProblems:
@@ -153,12 +131,12 @@ class TwoByTwoProblems:
         imageB = self.convert_black_white(Image.open(figureB.visualFilename))
         imageC = self.convert_black_white(Image.open(figureC.visualFilename))
 
-        if self.check_equal(imageA, imageB):
+        if self.robust_comparison_boolean(imageA, imageB):
             for key in figures:
                 if key.isalpha():
                     continue
                 figure = figures[key]
-                if self.check_equal(imageC, self.convert_black_white(Image.open(figure.visualFilename))):
+                if self.robust_comparison_boolean(imageC, self.convert_black_white(Image.open(figure.visualFilename))):
                     return int(figure.name)
 
         return -1
@@ -174,12 +152,12 @@ class TwoByTwoProblems:
         imageB = self.convert_black_white(Image.open(figureB.visualFilename))
         imageC = self.convert_black_white(Image.open(figureC.visualFilename))
 
-        if self.check_equal(imageA, imageC):
+        if self.robust_comparison_boolean(imageA, imageC):
             for key in figures:
                 if key.isalpha():
                     continue
                 figure = figures[key]
-                if self.check_equal(imageB, self.convert_black_white(Image.open(figure.visualFilename))):
+                if self.robust_comparison_boolean(imageB, self.convert_black_white(Image.open(figure.visualFilename))):
                     return int(figure.name)
 
         return -1
@@ -223,23 +201,23 @@ class TwoByTwoProblems:
         imageC = self.convert_black_white(Image.open(figureC.visualFilename))
 
         # Check if B is a vertical mirror of A. If so, find the vertical mirror of C.
-        if self.check_equal(rotatedImageA, imageB):
+        if self.robust_comparison_boolean(rotatedImageA, imageB):
             rotatedImageC = self.convert_black_white(imageC.transpose(Image.FLIP_LEFT_RIGHT))
             for key in figures:
                 if key.isalpha():
                     continue
                 figure = figures[key]
-                if self.check_equal(rotatedImageC, self.convert_black_white(Image.open(figure.visualFilename))):
+                if self.robust_comparison_boolean(rotatedImageC, self.convert_black_white(Image.open(figure.visualFilename))):
                     return int(figure.name)
 
         # Check if C is a vertical mirror of A. If so, find the vertical mirror of B.
-        if self.check_equal(rotatedImageA, imageC):
+        if self.robust_comparison_boolean(rotatedImageA, imageC):
             rotatedImageB = imageB.transpose(Image.FLIP_LEFT_RIGHT)
             for key in figures:
                 if key.isalpha():
                     continue
                 figure = figures[key]
-                if self.check_equal(rotatedImageB, self.convert_black_white(Image.open(figure.visualFilename))):
+                if self.robust_comparison_boolean(rotatedImageB, self.convert_black_white(Image.open(figure.visualFilename))):
                     return int(figure.name)
 
         # If no vertical mirror found, return -1
@@ -257,23 +235,23 @@ class TwoByTwoProblems:
         imageC = self.convert_black_white(Image.open(figureC.visualFilename))
 
         # Check if B is a horizontal mirror of A. If so, find the horizontal mirror of C.
-        if self.check_equal(rotatedImageA, imageB):
+        if self.robust_comparison_boolean(rotatedImageA, imageB):
             rotatedImageC = imageC.transpose(Image.FLIP_TOP_BOTTOM)
             for key in figures:
                 if key.isalpha():
                     continue
                 figure = figures[key]
-                if self.check_equal(rotatedImageC, self.convert_black_white(Image.open(figure.visualFilename))):
+                if self.robust_comparison_boolean(rotatedImageC, self.convert_black_white(Image.open(figure.visualFilename))):
                     return int(figure.name)
 
         # Check if C is a horizontal mirror of A. If so, find the horizontal mirror of B.
-        if self.check_equal(rotatedImageA, imageC):
+        if self.robust_comparison_boolean(rotatedImageA, imageC):
             rotatedImageB = imageB.transpose(Image.FLIP_TOP_BOTTOM)
             for key in figures:
                 if key.isalpha():
                     continue
                 figure = figures[key]
-                if self.check_equal(rotatedImageB, self.convert_black_white(Image.open(figure.visualFilename))):
+                if self.robust_comparison_boolean(rotatedImageB, self.convert_black_white(Image.open(figure.visualFilename))):
                     return int(figure.name)
 
         # If no horizontal mirror found, return -1
@@ -294,7 +272,7 @@ class TwoByTwoProblems:
                 if key.isalpha():
                     continue
                 figure = figures[key]
-                if self.check_equal(rotatedImageC, self.convert_black_white(Image.open(figure.visualFilename))):
+                if self.robust_comparison_boolean(rotatedImageC, self.convert_black_white(Image.open(figure.visualFilename))):
                     return int(figure.name)
 
         # Check if C is a rotation of A. If so, find the equivalent rotation of B.
@@ -305,17 +283,17 @@ class TwoByTwoProblems:
                 if key.isalpha():
                     continue
                 figure = figures[key]
-                if self.check_equal(rotatedImageB, self.convert_black_white(Image.open(figure.visualFilename))):
+                if self.robust_comparison_boolean(rotatedImageB, self.convert_black_white(Image.open(figure.visualFilename))):
                     return int(figure.name)
 
         return -1
 
     def determine_rotation_amount(self, image1, image2):
-        if self.check_equal(image1.rotate(90), image2):
+        if self.robust_comparison_boolean(image1.rotate(90), image2):
             return 90
-        if self.check_equal(image1.rotate(180), image2):
+        if self.robust_comparison_boolean(image1.rotate(180), image2):
             return 180
-        if self.check_equal(image1.rotate(270), image2):
+        if self.robust_comparison_boolean(image1.rotate(270), image2):
             return 270
         return -1
 
@@ -465,6 +443,10 @@ class TwoByTwoProblems:
             return True
         return False
 
+    def open_black_white_conversion(self, figureName):
+        image = self.convert_black_white(Image.open(figureName))
+        return image
+
     def convert_black_white(self, image):
         image = image.convert('L')
         pixels = image.load()
@@ -476,6 +458,57 @@ class TwoByTwoProblems:
                     pixels[i, j] = 255
 
         return image
+
+    def get_euclidean_diff(self, image1, image2):
+        arr1 = np.array(image1)
+        arr2 = np.array(image2)
+
+        eucDiff = (((arr1 - arr2) ** 2).sum(axis=1) ** (1/2)).sum()
+        eucDiff = eucDiff / arr1.size
+        eucSimilarity = 1 - eucDiff
+        return eucSimilarity
+
+    def get_dark_pixel_similarity_ratio(self, image1, image2):
+
+        pixelCount = 0
+        blackCount = 0
+        data = image1.getdata()
+        if data.mode == 'L':
+            for pixel in data:
+                pixelCount += 1
+                if pixel <= 127:
+                    blackCount += 1
+        ratio1 = blackCount/pixelCount
+
+        pixelCount = 0
+        blackCount = 0
+        data = image2.getdata()
+        if data.mode == 'L':
+            for pixel in data:
+                pixelCount += 1
+                if pixel <= 127:
+                    blackCount += 1
+        ratio2 = blackCount / pixelCount
+
+        ratioDiff = abs(ratio1 - ratio2)
+        ratioSimilar = 1 - ratioDiff
+        return ratioSimilar
+
+    def robust_comparison_value(self, image1, image2):
+        eucSimilarity = self.get_euclidean_diff(image1, image2)
+        darkPixelRatio = self.get_dark_pixel_similarity_ratio(image1, image2)
+
+        robustValue = (eucSimilarity + darkPixelRatio) / 2
+        return robustValue
+
+    def robust_comparison_boolean(self, image1, image2):
+        eucSimilarity = self.get_euclidean_diff(image1, image2)
+        darkPixelRatio = self.get_dark_pixel_similarity_ratio(image1, image2)
+
+        robustValue = (eucSimilarity + darkPixelRatio) / 2
+        if robustValue >= 0.995:
+            return True
+        return False
 
 
 
@@ -603,6 +636,34 @@ class ThreeByThreeProblems:
         robustValue = (eucSimilarity + darkPixelRatio) / 2
         return robustValue
 
+    def robust_comparison_boolean(self, image1, image2):
+        eucSimilarity = self.get_euclidean_diff(image1, image2)
+        darkPixelRatio = self.get_dark_pixel_similarity_ratio(image1, image2)
+
+        robustValue = (eucSimilarity + darkPixelRatio) / 2
+        if robustValue >= 0.995:
+            return True
+        return False
+
+    def reverse_image_halves(self, image):
+        height, width = image.size
+        widthHalf = width // 2
+
+        # Left Half
+        leftHalf = image.copy()
+        leftHalf = leftHalf.crop((0, 0, widthHalf, height))
+
+        # Right Half
+        rightHalf = image.copy()
+        rightHalf = rightHalf.crop((widthHalf, 0, width, height))
+
+        # Swap sides
+        newImage = Image.new('L', (width, height))
+        newImage.paste(rightHalf, (0, 0))
+        newImage.paste(leftHalf, (widthHalf, 0))
+
+        return newImage
+
 ##############  Solution methods  ##################################################################################################
 
     def check_equal_row(self, problem):
@@ -685,7 +746,7 @@ class ThreeByThreeProblems:
         darkPixelRatioBC = self.get_dark_pixel_similarity_ratio(imageB, imageC)
         ABCEucDiff = abs(eucSimilarityAB - eucSimilarityBC)
         ABCDarkPixelDiff = abs(darkPixelRatioAB - darkPixelRatioBC)
-        if ABCDarkPixelDiff >= 0.01 or ABCEucDiff >= 0.01:
+        if ABCDarkPixelDiff >= 0.01 or ABCEucDiff >= 0.01 or self.get_dark_pixel_similarity_ratio(imageA, imageC) >= 0.995:
             return -1
 
         eucSimilarityDE = self.get_euclidean_diff(imageD, imageE)
@@ -738,14 +799,124 @@ class ThreeByThreeProblems:
 
         return potentialAnswer
 
+    def check_corner_reflections(self, problem):
+        figures = problem.figures
+        figureA = figures["A"]
+        figureB = figures["B"]
+        figureC = figures["C"]
+        figureD = figures["D"]
+        figureE = figures["E"]
+        figureF = figures["F"]
+        figureG = figures["G"]
+        figureH = figures["H"]
+
+        imageA = self.open_black_white_conversion(figureA.visualFilename)
+        verticalFlipA = self.convert_black_white(Image.open(figureA.visualFilename).transpose(Image.FLIP_LEFT_RIGHT))
+        horizontalFlipA = self.convert_black_white(Image.open(figureA.visualFilename).transpose(Image.FLIP_TOP_BOTTOM))
+        imageB = self.open_black_white_conversion(figureB.visualFilename)
+        verticalFlipB = self.convert_black_white(Image.open(figureB.visualFilename).transpose(Image.FLIP_LEFT_RIGHT))
+        horizontalFlipB = self.convert_black_white(Image.open(figureB.visualFilename).transpose(Image.FLIP_TOP_BOTTOM))
+
+        imageC = self.open_black_white_conversion(figureC.visualFilename)
+
+        imageD = self.open_black_white_conversion(figureD.visualFilename)
+        verticalFlipD = self.convert_black_white(Image.open(figureD.visualFilename).transpose(Image.FLIP_LEFT_RIGHT))
+        horizontalFlipD = self.convert_black_white(Image.open(figureD.visualFilename).transpose(Image.FLIP_TOP_BOTTOM))
+        imageE = self.open_black_white_conversion(figureE.visualFilename)
+        imageF = self.open_black_white_conversion(figureF.visualFilename)
+
+        imageG = self.open_black_white_conversion(figureG.visualFilename)
+        imageH = self.open_black_white_conversion(figureH.visualFilename)
+
+        # AC and DF Vertical Mirror
+        if self.robust_comparison_boolean(verticalFlipA, imageC) and self.robust_comparison_boolean(verticalFlipD, imageF):
+            verticalFlipG = self.convert_black_white(Image.open(figureG.visualFilename).transpose(Image.FLIP_LEFT_RIGHT))
+            for key in figures:
+                if key.isalpha():
+                    continue
+                figure = figures[key]
+                imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+                if self.robust_comparison_boolean(verticalFlipG, imageAnswer):
+                    return int(figure.name)
+
+        # AC and DF Horizontal Mirror
+        if self.robust_comparison_boolean(horizontalFlipA, imageC) and self.robust_comparison_boolean(horizontalFlipD, imageF):
+            horizontalFlipG = self.convert_black_white(Image.open(figureG.visualFilename).transpose(Image.FLIP_TOP_BOTTOM))
+            for key in figures:
+                if key.isalpha():
+                    continue
+                figure = figures[key]
+                imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+                if self.robust_comparison_boolean(horizontalFlipG, imageAnswer):
+                    return int(figure.name)
+
+        # AG and BF Vertical Mirror
+        if self.robust_comparison_boolean(verticalFlipA, imageG) and self.robust_comparison_boolean(verticalFlipB, imageH):
+            verticalFlipC = self.convert_black_white(Image.open(figureC.visualFilename).transpose(Image.FLIP_LEFT_RIGHT))
+            for key in figures:
+                if key.isalpha():
+                    continue
+                figure = figures[key]
+                imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+                if self.robust_comparison_boolean(verticalFlipC, imageAnswer):
+                    return int(figure.name)
+
+        # AG and BF Horizontal Mirror
+        if self.robust_comparison_boolean(horizontalFlipA, imageG) and self.robust_comparison_boolean(horizontalFlipB, imageH):
+            horizontalFlipB = self.convert_black_white(Image.open(figureC.visualFilename).transpose(Image.FLIP_TOP_BOTTOM))
+            for key in figures:
+                if key.isalpha():
+                    continue
+                figure = figures[key]
+                imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+                if self.robust_comparison_boolean(horizontalFlipB, imageAnswer):
+                    return int(figure.name)
+
+        return -1
+
+    def reverse_image_halves_comparison(self, problem):
+        figures = problem.figures
+        figureA = figures["A"]
+        figureB = figures["B"]
+        figureC = figures["C"]
+        figureD = figures["D"]
+        figureE = figures["E"]
+        figureF = figures["F"]
+        figureG = figures["G"]
+        figureH = figures["H"]
+
+        imageA = self.open_black_white_conversion(figureA.visualFilename)
+        imageB = self.open_black_white_conversion(figureB.visualFilename)
+        imageC = self.open_black_white_conversion(figureC.visualFilename)
+        imageD = self.open_black_white_conversion(figureD.visualFilename)
+        imageE = self.open_black_white_conversion(figureE.visualFilename)
+        imageF = self.open_black_white_conversion(figureF.visualFilename)
+        imageG = self.open_black_white_conversion(figureG.visualFilename)
+        imageH = self.open_black_white_conversion(figureH.visualFilename)
+
+        swappedA = self.reverse_image_halves(imageA)
+        swappedD = self.reverse_image_halves(imageD)
+        if self.robust_comparison_value(swappedA, imageC) < 0.99 or self.robust_comparison_value(swappedD, imageF) < 0.99:
+            return -1
+
+        potentialAnswer = -1
+        bestAnswerValue = 0
+        for key in figures:
+            if key.isalpha():
+                continue
+            figure = figures[key]
+            swappedG = self.reverse_image_halves(imageG)
+            imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+            comparison = self.robust_comparison_value(swappedG, imageAnswer)
+            if comparison >= 0.99 and comparison > bestAnswerValue:
+                bestAnswerValue = comparison
+                potentialAnswer = int(figure.name)
+
+        return potentialAnswer
 
 
-
-
-
-
-# IDEA FOR C7: Do something similar to the equation above, but check for reflections/rotations. Maybe account for no black pixel changes?
-# IDEA FOR C9: Check if half of the image is symmetrical? OR check half of A reversed against C? Probably the second one.
+# IDEA FOR C10: Check if BD, CG, FH are rotations. If so, check if C doubles A, and if F double D. If so, find double G?
+    # What if B and E and H were separated already? Then they would technically have the same amount of pixels as 7.
 # C12 is reliably passing with the consistent_change_in_row method, but it isn't passing for the right reasons. Write a new method for this kind of thing?
 
 
