@@ -12,6 +12,7 @@
 from PIL import Image, ImageChops, ImageFilter
 import PIL.ImageOps
 import numpy as np
+import random
 
 class Agent:
     # The default constructor for your Agent. Make sure to execute any
@@ -109,9 +110,29 @@ class Agent:
             return answer
 
         # Project 3 solutions
-        answer = threeByThreeProblem.combine_panels(problem)
+        answer = threeByThreeProblem.combine_halves(problem)
         if answer > 0:
-            print(problem.name + ": " + str(answer) + " using combine_panels")
+            print(problem.name + ": " + str(answer) + " using combine_halves")
+            return answer
+
+        answer = threeByThreeProblem.combine_AB_panels(problem)
+        if answer > 0:
+            print(problem.name + ": " + str(answer) + " using combine_AB_panels")
+            return answer
+
+        answer = threeByThreeProblem.combine_AC_panels(problem)
+        if answer > 0:
+            print(problem.name + ": " + str(answer) + " using combine_AC_panels")
+            return answer
+
+        answer = threeByThreeProblem.combine_BC_panels(problem)
+        if answer > 0:
+            print(problem.name + ": " + str(answer) + " using combine_BC_panels")
+            return answer
+
+        answer = threeByThreeProblem.combine_differences(problem)
+        if answer > 0:
+            print(problem.name + ": " + str(answer) + " using combine_differences")
             return answer
 
         answer = threeByThreeProblem.detect_row_shift(problem)
@@ -119,17 +140,10 @@ class Agent:
             print(problem.name + ": " + str(answer) + " using detect_row_shift")
             return answer
 
-
-
-
-
-
-
-
-
-
-
-
+        # answer = threeByThreeProblem.subtract_AB_dark_pixels(problem)
+        # if answer > 0:
+        #     print(problem.name + ": " + str(answer) + " using subtract_AB_dark_pixels")
+        #     return answer
 
         answer = threeByThreeProblem.combine_row_column_similarities_2_factors(problem)
         if answer > 0:
@@ -143,8 +157,9 @@ class Agent:
             return answer
 
         # Default a guess to 1
+        answer = 1
         print(problem.name + ": 1 using default")
-        return 1
+        return answer
 
 
 class TwoByTwoProblems:
@@ -424,7 +439,6 @@ class TwoByTwoProblems:
                 diff = ImageChops.difference(imageC, imageN)
                 diff = diff.convert('L')
                 invertedDiff = PIL.ImageOps.invert(diff)
-                # invertedDiff.show()
 
                 pixelRatioDiff = self.dark_pixel_ratio(invertedDiff)
                 pixelRatioD = self.dark_pixel_ratio(imageN.convert('L'))
@@ -568,22 +582,6 @@ class ThreeByThreeProblems:
 
         return image
 
-    # def check_equal_black_white_simple(self, image1, image2):
-    #     diff = ImageChops.difference(image1, image2)
-    #     data = diff.getdata()
-    #     if diff.getbbox() is None:
-    #         return True
-    #     pixelCount = 0
-    #     blackCount = 0
-    #     if data.mode == 'L':
-    #         for pixel in data:
-    #             pixelCount += 1
-    #             if pixel == 0:
-    #                 blackCount += 1
-    #     if blackCount / pixelCount > 0.97:
-    #         return True
-    #     return False
-
     def get_dark_pixel_ratio(self, image):
         pixelCount = 0
         blackCount = 0
@@ -695,6 +693,76 @@ class ThreeByThreeProblems:
         newImage.paste(leftHalf, (widthHalf, 0))
 
         return newImage
+
+    def get_top_half(self, image):
+        height, width = image.size
+        heightHalf = height // 2
+
+        # Top Half
+        topHalf = image.copy()
+        topHalf = topHalf.crop((0, 0, width, heightHalf))
+
+        return topHalf
+
+    def get_bottom_half(self, image):
+        height, width = image.size
+        heightHalf = height // 2
+
+        # Bottom Half
+        bottomHalf = image.copy()
+        bottomHalf = bottomHalf.crop((0, heightHalf, width, height))
+
+        return bottomHalf
+
+    def combine_top_bottom_halves(self, topHalf, bottomHalf, fullDimensionImage):
+        height, width = fullDimensionImage.size
+        heightHalf = height // 2
+
+        newImage = Image.new('L', (width, height))
+        newImage.paste(topHalf, (0, 0))
+        newImage.paste(bottomHalf, (0, heightHalf))
+
+        return newImage
+
+    def answer_match_prompt_images(self, figures, answerImage):
+        figureA = figures["A"]
+        figureB = figures["B"]
+        figureC = figures["C"]
+        figureD = figures["D"]
+        figureE = figures["E"]
+        figureF = figures["F"]
+        figureG = figures["G"]
+        figureH = figures["H"]
+
+        imageA = self.open_black_white_conversion(figureA.visualFilename)
+        imageB = self.open_black_white_conversion(figureB.visualFilename)
+        imageC = self.open_black_white_conversion(figureC.visualFilename)
+        imageD = self.open_black_white_conversion(figureD.visualFilename)
+        imageE = self.open_black_white_conversion(figureE.visualFilename)
+        imageF = self.open_black_white_conversion(figureF.visualFilename)
+        imageG = self.open_black_white_conversion(figureG.visualFilename)
+        imageH = self.open_black_white_conversion(figureH.visualFilename)
+
+        if self.robust_comparison_value(imageA, answerImage) >= 0.98:
+            return True
+        elif self.robust_comparison_value(imageB, answerImage) >= 0.98:
+            return True
+        elif self.robust_comparison_value(imageC, answerImage) >= 0.98:
+            return True
+        elif self.robust_comparison_value(imageD, answerImage) >= 0.98:
+            return True
+        elif self.robust_comparison_value(imageE, answerImage) >= 0.98:
+            return True
+        elif self.robust_comparison_value(imageF, answerImage) >= 0.98:
+            return True
+        elif self.robust_comparison_value(imageG, answerImage) >= 0.98:
+            return True
+        elif self.robust_comparison_value(imageH, answerImage) >= 0.98:
+            return True
+        else:
+            return False
+
+
 
 ##############  Solution methods  ##################################################################################################
 
@@ -946,12 +1014,6 @@ class ThreeByThreeProblems:
 
         return potentialAnswer
 
-
-# IDEA FOR C10: Check if BD, CG, FH are rotations. If so, check if C doubles A, and if F double D. If so, find double G?
-    # What if B and E and H were separated already? Then they would technically have the same amount of pixels as 7.
-# C12 is reliably passing with the consistent_change_in_row method, but it isn't passing for the right reasons. Write a new method for this kind of thing?
-
-
 # ------------- Project 3 Methods ------------- #
 
     def detect_row_shift(self, problem):
@@ -1120,28 +1182,9 @@ class ThreeByThreeProblems:
         robustValue3 = self.robust_comparison_value(CHSim, DHSim)
         if robustValue1 > 0.98 and robustValue2 > 0.98 and robustValue3 > 0.98:
             combo1 = ImageChops.add(CDSim, CHSim)
-            CDHcombo = ImageChops.add(combo1, DHSim)
-            # CDHcombo.show()
-            #
-            # AFSim = ImageChops.add(imageA, imageF)
-            # AHSim = ImageChops.add(imageA, imageH)
-            # FHSim = ImageChops.add(imageF, imageH)
-            # robustValue4 = self.robust_comparison_value(AFSim, AHSim)
-            # robustValue5 = self.robust_comparison_value(AFSim, FHSim)
-            # robustValue6 = self.robust_comparison_value(AHSim, FHSim)
-            # AFHcombo = ImageChops.add(ImageChops.add(AFSim, AHSim), FHSim)
-            # AFHcombo.show()
-            #
-            # BFSim = ImageChops.add(imageB, imageF)
-            # BGSim = ImageChops.add(imageB, imageG)
-            # FGSim = ImageChops.add(imageF, imageG)
-            # BFGcombo = ImageChops.add(ImageChops.add(BFSim, BGSim), FGSim)
-            # BFGcombo.show()
 
             AESim = ImageChops.add(imageA, imageE)
-            # AESim.show()
             BDSim = ImageChops.add(imageB, imageD)
-            # BDSim.show()
 
             potentialAnswer = -1
             bestAnswerValue = 0
@@ -1172,9 +1215,6 @@ class ThreeByThreeProblems:
                         bestPattern1Value = pattern1Comparison
                         bestPattern1Answer = pattern1
 
-                    # bestPattern1Answer.show()
-
-
                     # Try to deduce pattern 2
                     bestPattern2Answer = None
                     bestPattern2Value = 0
@@ -1195,23 +1235,22 @@ class ThreeByThreeProblems:
                         if pattern2Comparison > bestPattern2Value:
                             bestPattern2Value = pattern2Comparison
                             bestPattern2Answer = pattern2
-                    # bestPattern2Answer.show()
-
 
                         # Combine both patterns and attempt to match to solution
                         answer = ImageChops.darker(pattern1, pattern2)
                         # answer.show()
+                        if self.answer_match_prompt_images(figures, answer):
+                            continue
                         comparison = self.robust_comparison_value(answer, imageAnswer)
                         if comparison >= 0.99 and comparison > bestAnswerValue:
                             bestAnswerValue = comparison
                             potentialAnswer = int(figure.name)
 
-                        return potentialAnswer
+                            return potentialAnswer
 
         return -1
 
-
-    def combine_panels(self, problem):
+    def combine_AB_panels(self, problem):
         figures = problem.figures
         figureA = figures["A"]
         figureB = figures["B"]
@@ -1246,23 +1285,200 @@ class ThreeByThreeProblems:
 
         return -1
 
+    def combine_AC_panels(self, problem):
+        figures = problem.figures
+        figureA = figures["A"]
+        figureB = figures["B"]
+        figureC = figures["C"]
+        figureD = figures["D"]
+        figureE = figures["E"]
+        figureF = figures["F"]
+        figureG = figures["G"]
+        figureH = figures["H"]
 
+        imageA = self.open_black_white_conversion(figureA.visualFilename)
+        imageB = self.open_black_white_conversion(figureB.visualFilename)
+        imageC = self.open_black_white_conversion(figureC.visualFilename)
+        imageD = self.open_black_white_conversion(figureD.visualFilename)
+        imageE = self.open_black_white_conversion(figureE.visualFilename)
+        imageF = self.open_black_white_conversion(figureF.visualFilename)
+        imageG = self.open_black_white_conversion(figureG.visualFilename)
+        imageH = self.open_black_white_conversion(figureH.visualFilename)
+
+        ACCombo = ImageChops.darker(imageA, imageC)
+        DFCombo = ImageChops.darker(imageD, imageF)
+
+        if self.robust_comparison_value(ACCombo, imageB) > 0.99 and self.robust_comparison_value(DFCombo, imageE) > 0.99:
+            for key in figures:
+                if key.isalpha():
+                    continue
+                figure = figures[key]
+                imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+                GAnswerCombo = ImageChops.darker(imageG, imageAnswer)
+                if self.robust_comparison_boolean(GAnswerCombo, imageH):
+                    return int(figure.name)
+
+        return -1
+
+    def combine_BC_panels(self, problem):
+        figures = problem.figures
+        figureA = figures["A"]
+        figureB = figures["B"]
+        figureC = figures["C"]
+        figureD = figures["D"]
+        figureE = figures["E"]
+        figureF = figures["F"]
+        figureG = figures["G"]
+        figureH = figures["H"]
+
+        imageA = self.open_black_white_conversion(figureA.visualFilename)
+        imageB = self.open_black_white_conversion(figureB.visualFilename)
+        imageC = self.open_black_white_conversion(figureC.visualFilename)
+        imageD = self.open_black_white_conversion(figureD.visualFilename)
+        imageE = self.open_black_white_conversion(figureE.visualFilename)
+        imageF = self.open_black_white_conversion(figureF.visualFilename)
+        imageG = self.open_black_white_conversion(figureG.visualFilename)
+        imageH = self.open_black_white_conversion(figureH.visualFilename)
+
+        BCCombo = ImageChops.darker(imageB, imageC)
+        EFCombo = ImageChops.darker(imageE, imageF)
+
+        if self.robust_comparison_value(BCCombo, imageA) > 0.99 and self.robust_comparison_value(EFCombo, imageD) > 0.99:
+            for key in figures:
+                if key.isalpha():
+                    continue
+                figure = figures[key]
+                imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+                HAnswerCombo = ImageChops.darker(imageH, imageAnswer)
+                if self.robust_comparison_boolean(HAnswerCombo, imageG):
+                    return int(figure.name)
+
+        return -1
+
+    def subtract_AB_dark_pixels(self, problem):
+        figures = problem.figures
+        figureA = figures["A"]
+        figureB = figures["B"]
+        figureC = figures["C"]
+        figureD = figures["D"]
+        figureE = figures["E"]
+        figureF = figures["F"]
+        figureG = figures["G"]
+        figureH = figures["H"]
+
+        imageA = self.open_black_white_conversion(figureA.visualFilename)
+        imageB = self.open_black_white_conversion(figureB.visualFilename)
+        imageC = self.open_black_white_conversion(figureC.visualFilename)
+        imageD = self.open_black_white_conversion(figureD.visualFilename)
+        imageE = self.open_black_white_conversion(figureE.visualFilename)
+        imageF = self.open_black_white_conversion(figureF.visualFilename)
+        imageG = self.open_black_white_conversion(figureG.visualFilename)
+        imageH = self.open_black_white_conversion(figureH.visualFilename)
+
+        imageADarkPixel = self.get_dark_pixel_ratio(imageA)
+        imageBDarkPixel = self.get_dark_pixel_ratio(imageB)
+        imageCDarkPixel = self.get_dark_pixel_ratio(imageC)
+        imageDDarkPixel = self.get_dark_pixel_ratio(imageD)
+        imageEDarkPixel = self.get_dark_pixel_ratio(imageE)
+        imageFDarkPixel = self.get_dark_pixel_ratio(imageF)
+        imageGDarkPixel = self.get_dark_pixel_ratio(imageG)
+        imageHDarkPixel = self.get_dark_pixel_ratio(imageH)
+
+        if (imageADarkPixel - imageBDarkPixel >= imageCDarkPixel - 0.01 or imageADarkPixel - imageBDarkPixel <= imageCDarkPixel + 0.01) and (imageDDarkPixel - imageEDarkPixel >= imageFDarkPixel - 0.01 or imageDDarkPixel - imageEDarkPixel <= imageFDarkPixel + 0.01):
+            for key in figures:
+                if key.isalpha():
+                    continue
+                figure = figures[key]
+                imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+                imageAnswerDarkPixel = self.get_dark_pixel_ratio(imageAnswer)
+                if imageGDarkPixel - imageHDarkPixel >= imageAnswerDarkPixel - 0.01 or imageGDarkPixel - imageHDarkPixel <= imageAnswerDarkPixel + 0.01:
+                    return int(figure.name)
+
+        return -1
+
+    # Currently just takes top half from A and combines with bottom half of B, not dynamic enough to check for all possible half combos
+    def combine_halves(self, problem):
+        figures = problem.figures
+        figureA = figures["A"]
+        figureB = figures["B"]
+        figureC = figures["C"]
+        figureD = figures["D"]
+        figureE = figures["E"]
+        figureF = figures["F"]
+        figureG = figures["G"]
+        figureH = figures["H"]
+
+        imageA = self.open_black_white_conversion(figureA.visualFilename)
+        imageB = self.open_black_white_conversion(figureB.visualFilename)
+        imageC = self.open_black_white_conversion(figureC.visualFilename)
+        imageD = self.open_black_white_conversion(figureD.visualFilename)
+        imageE = self.open_black_white_conversion(figureE.visualFilename)
+        imageF = self.open_black_white_conversion(figureF.visualFilename)
+        imageG = self.open_black_white_conversion(figureG.visualFilename)
+        imageH = self.open_black_white_conversion(figureH.visualFilename)
+
+        ABtopBottomCombineImage = self.combine_top_bottom_halves(self.get_top_half(imageA), self.get_bottom_half(imageB), imageC)
+        DEtopBottomCombineImage = self.combine_top_bottom_halves(self.get_top_half(imageD), self.get_bottom_half(imageE), imageF)
+        GHtopBottomCombineImage = self.combine_top_bottom_halves(self.get_top_half(imageG), self.get_bottom_half(imageH), imageG)
+
+        if self.robust_comparison_boolean(ABtopBottomCombineImage, imageC) and self.robust_comparison_boolean(DEtopBottomCombineImage, imageF):
+            potentialAnswer = -1
+            bestAnswerValue = 0
+            for key in figures:
+                if key.isalpha():
+                    continue
+                figure = figures[key]
+                imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+                comparison = self.robust_comparison_value(GHtopBottomCombineImage, imageAnswer)
+                if comparison >= 0.99 and comparison > bestAnswerValue:
+                    bestAnswerValue = comparison
+                    potentialAnswer = int(figure.name)
+            return potentialAnswer
+
+        return -1
+
+    def combine_differences(self, problem):
+        figures = problem.figures
+        figureA = figures["A"]
+        figureB = figures["B"]
+        figureC = figures["C"]
+        figureD = figures["D"]
+        figureE = figures["E"]
+        figureF = figures["F"]
+        figureG = figures["G"]
+        figureH = figures["H"]
+
+        imageA = self.open_black_white_conversion(figureA.visualFilename)
+        imageB = self.open_black_white_conversion(figureB.visualFilename)
+        imageC = self.open_black_white_conversion(figureC.visualFilename)
+        imageD = self.open_black_white_conversion(figureD.visualFilename)
+        imageE = self.open_black_white_conversion(figureE.visualFilename)
+        imageF = self.open_black_white_conversion(figureF.visualFilename)
+        imageG = self.open_black_white_conversion(figureG.visualFilename)
+        imageH = self.open_black_white_conversion(figureH.visualFilename)
+
+        ABDiff = ImageChops.invert(ImageChops.difference(imageA, imageB))
+        DEDiff = ImageChops.invert(ImageChops.difference(imageD, imageE))
+        GHDiff = ImageChops.invert(ImageChops.difference(imageG, imageH))
+
+        if self.robust_comparison_value(ABDiff, imageC) >= 0.99 and self.robust_comparison_value(DEDiff, imageF) >= 0.99:
+            potentialAnswer = -1
+            bestAnswerValue = 0
+            for key in figures:
+                if key.isalpha():
+                    continue
+                figure = figures[key]
+                imageAnswer = self.open_black_white_conversion(figure.visualFilename)
+                comparison = self.robust_comparison_value(GHDiff, imageAnswer)
+                if comparison >= 0.95 and comparison > bestAnswerValue:
+                    bestAnswerValue = comparison
+                    potentialAnswer = int(figure.name)
+            return potentialAnswer
+
+        return -1
 
 
 
 
 
 ##############  EXPERIMENTAL methods  ##################################################################################################
-
-    # This is just a test to see how well these new comparisons work
-    def check_2x2_with_new_technique(self, problem):
-        figures = problem.figures
-        figureA = figures["A"]
-        figureB = figures["B"]
-        figureC = figures["C"]
-
-        imageA = self.open_black_white_conversion(figureA.visualFilename).transpose(Image.FLIP_LEFT_RIGHT)
-        imageB = self.open_black_white_conversion(figureB.visualFilename)
-
-        robustValue = self.robust_comparison_value(imageA, imageB)
-        print(robustValue)
